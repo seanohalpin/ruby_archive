@@ -1,6 +1,10 @@
-= rubyarchive-pure
+= ruby_archive_pure
 
-Description goes here.
+Seamless access to ruby source and other files inside zip archives -- Pure Ruby edition
+
+A Ruby Summer of Code 2010 Project
+
+More useful readme information coming real soon! (like next code push, next couple of days)
 
 == Note on Patches/Pull Requests
  
@@ -14,4 +18,5 @@ Description goes here.
 
 == Copyright
 
-Copyright (c) 2010 Jonathan Nielsen. See LICENSE for details.
+Copyright (c) 2010 Jonathan Nielsen.
+Released under Ruby's license, including GPL option.
