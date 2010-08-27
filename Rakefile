@@ -4,11 +4,11 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "rubyarchive-pure"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.name = "ruby_archive"
+    gem.summary = %Q{Seamless access to ruby source and other files inside zip archives}
+    gem.description = %Q{Allows loading applications, libraries, and data from easily distributable archive files}
     gem.email = "jonathan@jmnet.us"
-    gem.homepage = "http://github.com/byuni/rubyarchive-pure"
+    gem.homepage = "http://github.com/byuni/ruby_archive"
     gem.authors = ["Jonathan Nielsen"]
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
