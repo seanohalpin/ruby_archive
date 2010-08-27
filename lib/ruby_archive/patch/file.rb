@@ -15,26 +15,21 @@ class File
     def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
       if File.exist?(path)
         f = File.open_from_filesystem(path,mode,perm)
-#        f = IO.new(IO::sysopen(path,mode,perm))
         return f if block.nil?
         begin
           return yield(f)
         ensure
           f.close
         end
-        #return open_from_filesystem(path,mode,perm,&block)
       end
       sp = path.split('!')
       if sp.size <= 1
-        if perm.nil?
-          f = File.open_from_filesystem(path,mode,perm)
-          #f = IO.new(IO::sysopen(path,mode,perm,&block))
-          return f if block.nil?
-          begin
-            return yield(f)
-          ensure
-            f.close
-          end
+        f = File.open_from_filesystem(path,mode,perm)
+        return f if block.nil?
+        begin
+          return yield(f)
+        ensure
+          f.close
         end
       elsif sp.size == 2
         f = RubyArchive.get(sp[0]).file.open(sp[1],mode) # perm ignored
