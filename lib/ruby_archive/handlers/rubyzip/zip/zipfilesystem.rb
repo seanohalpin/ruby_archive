@@ -224,7 +224,7 @@ module Zip
 	expand_path(fileName) == "/" || (entry != nil && entry.directory?)
       end
       
-      def open(fileName, openMode = "r", &block)
+      def open(fileName, openMode = "r", perm = 'ignored', &block)
         openMode.gsub!("b", "") # ignore b option
         case openMode
         when "r" 
