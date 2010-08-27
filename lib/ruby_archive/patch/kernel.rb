@@ -1,5 +1,4 @@
 module Kernel
-  puts 'heh'
   class << self
     unless Kernel.respond_to?('open_pipe')
       # Alias for the original +Kernel::open+
@@ -12,10 +11,6 @@ module Kernel
       else
         return File::open(path,mode,perm,&block)
       end
-    end
-
-    def meh
-      puts 'oh hi'
     end
   end
 
