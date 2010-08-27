@@ -14,16 +14,36 @@ class File
     # due to incompatibility with rubyzip.
     def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
       if File.exist?(path)
-        return IO.new(IO::sysopen(path,mode,perm,&block))
+        f = File.open_from_filesystem(path,mode,perm)
+#        f = IO.new(IO::sysopen(path,mode,perm))
+        return f if block.nil?
+        begin
+          return yield(f)
+        ensure
+          f.close
+        end
         #return open_from_filesystem(path,mode,perm,&block)
       end
       sp = path.split('!')
       if sp.size <= 1
         if perm.nil?
-          return IO.new(IO::sysopen(path,mode,perm,&block))
+          f = File.open_from_filesystem(path,mode,perm)
+          #f = IO.new(IO::sysopen(path,mode,perm,&block))
+          return f if block.nil?
+          begin
+            return yield(f)
+          ensure
+            f.close
+          end
         end
       elsif sp.size == 2
-        return RubyArchive.get(sp[0]).file.open(sp[1],mode,&block) # perm ignored
+        f = RubyArchive.get(sp[0]).file.open(sp[1],mode) # perm ignored
+        return f if block.nil?
+        begin
+          return yield(f)
+        ensure
+          f.close
+        end
       else
         raise ArgumentError, "Malformed archive location -- only one level deep supported (for now)"
       end
@@ -37,7 +57,7 @@ class File
     # Replacement for stock +File::read+
     def read name,length=nil,offset=nil
       ret = nil
-      open(name) do |f|
+      self.open(name) do |f|
         f.seek(offset) unless offset.nil?
         ret = f.read(length)
       end
