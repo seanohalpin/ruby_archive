@@ -57,7 +57,18 @@ module RubyArchive
     @@loaded_archives[archive.name] = archive
   end
 
+  def self.close_all_archives
+    @@loaded_archives.each_value do |archive|
+      archive.close
+    end
+    @@loaded_archives.clear
+    true
+  end
+
 end
+
+# Set RubyArchive::close_all_archives to at_exit
+at_exit { RubyArchive::close_all_archives }
 
 # load builtin handlers
 Dir.glob(

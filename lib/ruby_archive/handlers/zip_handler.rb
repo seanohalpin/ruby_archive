@@ -30,6 +30,10 @@ module RubyArchive::Handlers
       @name = normalized_location
     end
 
+    def close
+      @zipfs.close
+    end
+
     def file
       @zipfs.file
     end

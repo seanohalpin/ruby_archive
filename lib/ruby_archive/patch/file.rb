@@ -14,7 +14,7 @@ class File
     # due to incompatibility with rubyzip.
     def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
       if File.exist?(path)
-        f = File.open_from_filesystem(path,mode,perm)
+        return File.open_from_filesystem(path,mode,perm,&block)
         return f if block.nil?
         begin
           return yield(f)
@@ -24,7 +24,7 @@ class File
       end
       sp = path.split('!')
       if sp.size <= 1
-        f = File.open_from_filesystem(path,mode,perm)
+        return File.open_from_filesystem(path,mode,perm,&block)
         return f if block.nil?
         begin
           return yield(f)

@@ -25,6 +25,14 @@ module RubyArchive
       raise NotImplementedError, "Cannot initialize a handler of class #{self.class}"
     end
 
+    # Close the handler.  This will be executed when +RubyArchive::close_all_archives+
+    # is executed, or at_exit
+    #
+    # Should always return nil
+    def close
+      nil
+    end
+
     # Should return a +File+-like object for the archive.  The default
     # implementation raises a +NotImplentedError+, must be overridden.
     def file
