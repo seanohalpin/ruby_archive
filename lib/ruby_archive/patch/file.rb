@@ -14,7 +14,8 @@ class File
     # due to incompatibility with rubyzip.
     def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
       if File.exist?(path)
-        return open_from_filesystem(path,mode,perm,&block)
+        return IO.new(IO::sysopen(path,mode,perm,&block))
+        #return open_from_filesystem(path,mode,perm,&block)
       end
       sp = path.split('!')
       if sp.size <= 1
@@ -37,7 +38,7 @@ class File
     def read name,length=nil,offset=nil
       ret = nil
       open(name) do |f|
-        f.scan(offset) unless offset.nil?
+        f.seek(offset) unless offset.nil?
         ret = f.read(length)
       end
       ret
