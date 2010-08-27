@@ -10,34 +10,33 @@ class File
 
     #private
     def forward_method method, path_arg_index
-      eval %{
-        #class << self
-          method = :'#{method}' ; path_arg_index = #{path_arg_index}
-          aliased_name = "original_#{method}".intern
-          
-          alias_method(aliased_name,method)
-          private(aliased_name)
-
-          define_method(method) do |*args|
-            args_before = args[0..(path_arg_index-1)]
-            path = args[path_arg_index]
-            args_after = args[(path_arg_index+1)..(args.size-1)]
-            
-            if File.original_exist?(path)
-              return File.send(aliased_name,*args)
-            end
-            sp = path.split('!')
-            if sp.size <= 1
-              File.send(aliased_name,*args)
-            elsif sp.size == 2
-              args_to_send = args_before + [sp[1]] + args_after
-              RubyArchive.get(sp[0]).file.send(method,*args_to_send)
-            else
-              raise ArgumentError, ONLY_ONE_DEEP
-            end         
-          end
-        #end
-      }, MY_BIND, "file:eval", 1
+      #class << self
+#      method = :'#{method}' ; path_arg_index = #{path_arg_index}
+      aliased_name = "original_#{method}".intern
+      
+      alias_method(aliased_name,method)
+      private(aliased_name)
+      
+      define_method(method) do |*args|
+        args_before = args[0..(path_arg_index-1)]
+        path = args[path_arg_index]
+        args_after = args[(path_arg_index+1)..(args.size-1)]
+        
+        if File.original_exist?(path)
+          return File.send(aliased_name,*args)
+        end
+        sp = path.split('!')
+        if sp.size <= 1
+          File.send(aliased_name,*args)
+        elsif sp.size == 2
+          args_to_send = args_before + [sp[1]] + args_after
+          RubyArchive.get(sp[0]).file.send(method,*args_to_send)
+          puts("sent file.#{method}("+args_to_send.join(',')+")")
+        else
+          raise ArgumentError, ONLY_ONE_DEEP
+        end         
+      end
+      #end
     end
 
     public

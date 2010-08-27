@@ -1,6 +1,6 @@
-= ruby_archive_pure
+= ruby_archive
 
-Seamless access to ruby source and other files inside zip archives -- Pure Ruby edition
+Seamless access to ruby source and other files inside zip archives
 
 A Ruby Summer of Code 2010 Project
 
