@@ -10,6 +10,9 @@ tmtags
 \#*
 .\#*
 
+## RUBINIUS
+*.rbc
+
 ## VIM
 *.swp
 
