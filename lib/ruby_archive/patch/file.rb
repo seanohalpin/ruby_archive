@@ -3,11 +3,6 @@ class File
     @@ruby_archive_file_class_bind = binding
     ONLY_ONE_DEEP = "Malformed archive location -- only one level deep supported (for now)"
 
-    unless File.respond_to?('original_open')
-      # Alias for the original +File::open+
-      alias original_open open
-    end
-
     # Automates creating class methods that operate on either normal files
     # or files within archives, given a symbol with the name of the method
     # and the index of the argument containing the file name.
@@ -120,6 +115,13 @@ class File
         end
       }, @@ruby_archive_file_class_bind, __FILE__, eval_line
     end
+    #protected(:forward_method_multi)  # -- protecting this method makes rubinius choke
+
+    unless File.respond_to?('ruby_archive_original_open')
+      # Alias for the original +File::open+
+      alias ruby_archive_original_open open
+      protected(:ruby_archive_original_open)
+    end
 
     # Open a file, either from the filesystem or from within an archive.
     # If the given path exists on the filesystem, it will be opened from
@@ -130,11 +132,11 @@ class File
     # due to incompatibility with rubyzip.
     def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
       if File.ruby_archive_original_exist?(path)
-        return File.original_open(path,mode,perm,&block)
+        return File.ruby_archive_original_open(path,mode,perm,&block)
       end
       sp = path.split('!')
       if sp.size <= 1
-        return File.original_open(path,mode,perm,&block)
+        return File.ruby_archive_original_open(path,mode,perm,&block)
       elsif sp.size == 2
         f = RubyArchive.get(sp[0]).file.open(sp[1],mode) # perm ignored
         return f if block.nil?
@@ -148,33 +150,6 @@ class File
       end
     end
 
-
-    unless File.respond_to?('original_delete')
-      # Alias for the original +File::delete+
-      alias original_delete delete
-    end
-    # Deletes the named files, returning the number of names passed as arguments.
-    # Raises an exception on any error.
-    #
-    # Does not use forward_method because it needs to operate on an array.
-    #def delete(*files)
-    #  files.each do |path|
-    #    if File.original_exist?(path)
-    #      File.original_delete(path)
-    #      next
-    #    end
-    #    sp = path.split('!')
-    #    if sp.size <= 1
-    #      File.original_delete(path)
-    #    elsif sp.size == 2
-    #      RubyArchive.get(sp[0]).file.delete(sp[1])
-    #    else
-    #      raise ArgumentError, ONLY_ONE_DEEP
-    #    end
-    #  end
-    #  return files.size
-    #end
-    #alias unlink delete
 
     # Replacement for stock +File::read+
     def read name,length=nil,offset=nil
