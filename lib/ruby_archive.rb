@@ -11,14 +11,14 @@ module RubyArchive
     # loaded at end of file
   end
 
-  @@handlers ||= []
+  @@archive_handlers ||= []
   # Adds an archive handler to the list used.  Provided handler must be a
   # subclass of +RubyArchive::Handler+
   def add_handler_class handler_class
     unless (handler_class.is_a? Class) && (handler_class <= RubyArchive::Handler)
       raise TypeError, "#{handler_class} is not a RubyArchive::Handler"
     end
-    @@handlers << handler_class
+    @@archive_handlers << handler_class
     true
   end
   module_function :add_handler_class
@@ -26,7 +26,7 @@ module RubyArchive
   # Finds the appropriate +RubyArchive::Handler+ subclass for a given location.
   # Returns nil if no supported handler found.
   def find_handler_class location
-    @@handlers.each do |h|
+    @@archive_handlers.each do |h|
       return h if h.handles?(location)
     end
     return nil
@@ -39,7 +39,7 @@ module RubyArchive
   # archive is not available and autoload is false.  Raises +LoadError+
   # if autoload is attempted and fails.
   def get location, autoload=true
-    @@handlers.each do |h|
+    @@archive_handlers.each do |h|
       normalized = h.normalize_path(location)
       return @@loaded_archives[normalized] if @@loaded_archives.has_key?(normalized)
     end

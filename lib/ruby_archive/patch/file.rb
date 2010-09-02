@@ -3,6 +3,20 @@ class File
     @@ruby_archive_file_class_bind = binding
     ONLY_ONE_DEEP = "Malformed archive location -- only one level deep supported (for now)"
 
+    # Determines whether a specified location appears to be within an archive.
+    # It first checks if the given location exists on the filesystem, and if
+    # not check if there is an '!' mark in the filename.
+    #
+    # Returns an array of [archive_path, file_inside_archive] if location appears
+    # to be in an archive, +false+ otherwise.
+    def in_archive? path
+      return false if File.ruby_archive_original_exist?(path)
+      sp = path.split('!')
+      return sp if sp.size == 2
+      raise ArgumentError, ONLY_ONE_DEEP if sp.size > 2
+      return false
+    end
+
     # Automates creating class methods that operate on either normal files
     # or files within archives, given a symbol with the name of the method
     # and the index of the argument containing the file name.
@@ -30,6 +44,7 @@ class File
             raise ArgumentError, "wrong number of arguments (0 for #{min_arguments})"
           end
 
+          # grab args before and after the filepath
           args_before_path = nil
           if #{path_arg_index} == 0
             args_before_path = []
@@ -39,24 +54,20 @@ class File
           path = args[#{path_arg_index}]
           args_after_path = args[(#{path_arg_index + 1})..(args.size-1)]
         
-          if File.ruby_archive_original_exist?(path)
+          # get file location info and forward it to the appropriate method
+          location_info = File.in_archive?(path)
+          if location_info == false
             return File.send(:#{alias_name},*args)
-          end
-          sp = path.split('!')
-          if sp.size <= 1
-            return File.send(:#{alias_name},*args)
-          elsif sp.size == 2
+          else
             begin
-              file_handler = RubyArchive.get(sp[0]).file
+              file_handler = RubyArchive.get(location_info[0]).file
               raise NotImplementedError unless file_handler.respond_to?(:#{method})
-              args_to_send = args_before_path + [sp[1]] + args_after_path
+              args_to_send = args_before_path + [location_info[1]] + args_after_path
               return file_handler.send(:#{method},*args_to_send)
             rescue NotImplementedError
               raise NotImplementedError, "#{method} not implemented in handler for specified archive"
             end
-          else
-            raise ArgumentError, ONLY_ONE_DEEP
-          end         
+          end
         end
       }, @@ruby_archive_file_class_bind, __FILE__, eval_line
     end
@@ -78,6 +89,7 @@ class File
             raise ArgumentError, "wrong number of arguments (0 for #{min_arguments})"
           end
 
+          # grab args before the list of filepaths, and the list of filepaths
           args_before_path = nil
           if #{first_path_arg_index} == 0
             args_before_path = []
@@ -87,28 +99,22 @@ class File
           path_list = args[#{first_path_arg_index}..(args.size - 1)]
 
           path_list.each do |path|
-            if File.ruby_archive_original_exist?(path)
+            location_info = File.in_archive?(path)
+            if location_info == false
               args_to_send = args_before_path + [path]
               File.send(:#{alias_name},*args_to_send)
               next
-            end
-            sp = path.split('!')
-            if sp.size <= 1
-              args_to_send = args_before_path + [path]
-              File.send(:#{alias_name},*args_to_send)
-              next
-            elsif sp.size == 2
+            else
               begin
-                file_handler = RubyArchive.get(sp[0]).file
+                file_handler = RubyArchive.get(location_info[0]).file
                 raise NotImplementedError unless file_handler.respond_to?(:#{method})
-                args_to_send = args_before_path + [sp[1]]
+                args_to_send = args_before_path + [location_info[1]]
+puts "sending #{method}\#{args_to_send.inspect}"
                 file_handler.send(:#{method},*args_to_send)
                 next
               rescue NotImplementedError
                 raise NotImplementedError, "#{method} not implemented in handler for specified archive"
               end
-            else
-              raise ArgumentError, ONLY_ONE_DEEP
             end         
           end
           return path_list.size
@@ -134,19 +140,17 @@ class File
       if File.ruby_archive_original_exist?(path)
         return File.ruby_archive_original_open(path,mode,perm,&block)
       end
-      sp = path.split('!')
-      if sp.size <= 1
+      location_info = File.in_archive?(path)
+      if location_info == false
         return File.ruby_archive_original_open(path,mode,perm,&block)
-      elsif sp.size == 2
-        f = RubyArchive.get(sp[0]).file.open(sp[1],mode) # perm ignored
+      else
+        f = RubyArchive.get(location_info[0]).file.open(location_info[1],mode)
         return f if block.nil?
         begin
           return yield(f)
         ensure
           f.close
         end
-      else
-        raise ArgumentError, ONLY_ONE_DEEP
       end
     end
 
@@ -203,7 +207,7 @@ class File
 
     File.forward_method_single(:grpowned?)
 
-    #File.forward_method(:identical
+    # no replacement for identical right now
 
     # join does not need to be forwarded
 
