@@ -299,7 +299,7 @@ module Zip
 	::File.join(*fragments)
       end
       
-      def utime(modifiedTime, *fileNames)
+      def utime(atime_ignored, modifiedTime, *fileNames)
         fileNames.each { |fileName|
           get_entry(fileName).time = modifiedTime
         }
