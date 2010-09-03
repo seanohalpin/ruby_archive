@@ -17,14 +17,17 @@ To use it, simply +require 'ruby_archive'+ in your project.  After this, you can
 * much more...
 
 The format for accessing files within an archive is: "(archive_file)!/(file_within_archive)"
-So to open +information.txt+ inside +archive.jar+, you might:\<br>
+So to open +information.txt+ inside +archive.jar+, you might:
+
 <code>f = File.open('./archive.jar!/information.txt','r')</code>
 
-Or to load +source.rb+ inside +program.zip+, you might:\<br>
+Or to load +source.rb+ inside +program.zip+, you might:
+
 <code>require './program.zip!/source'</code>
 
-You can also add archive directories to the load path:\<br>
-<code>$LOAD_PATH << 'program.zip!/'<br>
+You can also add archive directories to the load path:
+
+<code>$LOAD_PATH << 'program.zip!/'
 require 'source'</code>
 
 == Note on Patches/Pull Requests
