@@ -126,7 +126,7 @@ class File
 
     # Marks a function as unsupported by archives.  path_args should be an array
     # of argument indices containing filepaths to check.
-    def forward_method_unsupported method, min_arguments=1, path_args=[0]
+    def forward_method_unsupported method, min_arguments=1, path_args=[0], return_instead=:raise
       alias_name = "ruby_archive_original_#{method}".intern
       eval_line = __LINE__; eval %{
         unless File.respond_to?(:#{alias_name})
@@ -142,6 +142,10 @@ class File
           # grab args before the list of filepaths, and the list of filepaths
           #{path_args.inspect}.each do |i|
             if File.in_archive?(args[i]) != false
+              unless #{return_instead.inspect} == :raise
+                warn "Dir.#{method} is not supported for files within archives"
+                return #{return_instead.inspect}
+              end
               raise NotImplementedError, "File.#{method} is not supported for files within archives (yet)"
             end
           end

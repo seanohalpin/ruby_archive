@@ -491,6 +491,29 @@ module Zip
       	raise NotImplementedError, "The chroot() function is not implemented"
       end
 
+      def glob_single(pattern,flags=0)
+        base = File.dirname(pattern)
+        dir = self.open(base)
+        results = []
+        dir.each do |f|
+          test = "#{base}#{f}"
+          results << test if File.fnmatch(pattern,test,flags)
+        end
+        return results
+      end
+      private(:glob_single)
+
+      def glob(pattern,flags=0)
+        case pattern
+        when String then return glob_single(pattern,flags) if pattern.is_a?(String)
+        when Array
+          results = []
+          pattern.each { |p| results += glob_single(p,flags) }
+          return results
+        else
+          raise TypeError, "Unexpected type #{pattern.class}, expected String or Array"
+        end
+      end
     end
 
     class ZipFsDirIterator # :nodoc:all

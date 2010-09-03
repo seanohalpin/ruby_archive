@@ -69,10 +69,8 @@ class Dir
     # the argument list ends with a list of files to operate on rather than
     # a single file to operate on.
     #
-    # This code is heavily duplicated from +File.forward_method_multi+ - I would like
-    # to make the same code work in two different places but couldn't quickly find
-    # a way.
-    def forward_method_multi method, min_arguments=1, first_path_arg_index=0
+    # This code is basically +File.forward_method_multi+ adapted for Dir.glob and the like
+    def forward_method_array method, min_arguments=1, array_index=0
       alias_name = "ruby_archive_original_#{method}".intern
       eval_line = __LINE__; eval %{
         unless Dir.respond_to?(:#{alias_name})
@@ -86,33 +84,37 @@ class Dir
           end
 
           # grab args before the list of filepaths, and the list of filepaths
-          args_before_path = nil
-          if #{first_path_arg_index} == 0
-            args_before_path = []
+          args_before_array = nil
+          if #{array_index} == 0
+            args_before_array = []
           else
-            args_before_path = args[0..(#{first_path_arg_index - 1})]
+            args_before_array = args[0..#{array_index - 1}]
           end
-          path_list = args[#{first_path_arg_index}..(args.size - 1)]
+          args_after_array = args[#{array_index + 1}..(args.size - 1)]
 
+          path_list = args[#{array_index}]
+
+          results = []
           path_list.each do |path|
             location_info = File.in_archive?(path)
             if location_info == false
-              args_to_send = args_before_path + [path]
-              Dir.send(:#{alias_name},*args_to_send)
+              args_to_send = args_before_array + [path] + args_after_array
+              results += Dir.send(:#{alias_name},*args_to_send)
               next
             else
               begin
                 dir_handler = RubyArchive.get(location_info[0]).dir
                 raise NotImplementedError unless dir_handler.respond_to?(:#{method})
-                args_to_send = args_before_path + [location_info[1]]
-                dir_handler.send(:#{method},*args_to_send)
+                args_to_send = args_before_array + [location_info[1]] + args_after_array
+                get_array = dir_handler.send(:#{method},*args_to_send)
+                results += get_array.map { |file| "\#{location_info[0]}!\#{file}" }
                 next
               rescue NotImplementedError
                 raise NotImplementedError, "#{method} not implemented in handler for specified archive"
               end
-            end         
+            end
           end
-          return path_list.size
+          return results
         end
       }, @@ruby_archive_dir_class_bind, __FILE__, eval_line
     end
@@ -124,7 +126,7 @@ class Dir
     # This code is heavily duplicated from +File.forward_method_unsupported+ - I would like
     # to make the same code work in two different places but couldn't quickly find
     # a way.
-    def forward_method_unsupported method, min_arguments=1, path_args=[0]
+    def forward_method_unsupported method, min_arguments=1, path_args=[0], return_instead=:raise
       alias_name = "ruby_archive_original_#{method}".intern
       eval_line = __LINE__; eval %{
         unless Dir.respond_to?(:#{alias_name})
@@ -140,6 +142,11 @@ class Dir
           # grab args before the list of filepaths, and the list of filepaths
           #{path_args.inspect}.each do |i|
             if File.in_archive?(args[i]) != false
+              unless #{return_instead.inspect} == :raise
+                warn "Dir.#{method} is not supported for files within archives"
+                puts "#{return_instead.inspect}"
+                return #{return_instead.inspect}
+              end
               raise NotImplementedError, "Dir.#{method} is not supported for files within archives (yet)"
             end
           end
@@ -148,49 +155,7 @@ class Dir
         end
       }, @@ruby_archive_dir_class_bind, __FILE__, eval_line
     end
-    #protected(:forward_method_multi)  # -- protecting this method makes rubinius choke
-
-#    unless File.respond_to?('ruby_archive_original_open')
-      # Alias for the original +File::open+
-#      alias ruby_archive_original_open open
-#      protected(:ruby_archive_original_open)
-#    end
-
-    # Open a file, either from the filesystem or from within an archive.
-    # If the given path exists on the filesystem, it will be opened from
-    # there.  Otherwise the path will be split by delimiter +!+ and
-    # checked again.
-    #
-    # TODO: 'perm' is currently ignored by anything sent to an archive,
-    # due to incompatibility with rubyzip.
-#    def open path,mode='r',perm=0666,&block # 0666 from io.c in MRI
-#      if File.ruby_archive_original_exist?(path)
-#        return File.ruby_archive_original_open(path,mode,perm,&block)
-#      end
-#      location_info = File.in_archive?(path)
-#      if location_info == false
-#        return File.ruby_archive_original_open(path,mode,perm,&block)
-#      else
-#        f = RubyArchive.get(location_info[0]).file.open(location_info[1],mode)
-#        return f if block.nil?
-#        begin
-#          return yield(f)
-#        ensure
-#          f.close
-#        end
-#      end
-#    end
-
-
-    # Replacement for stock +File::read+
-#    def read name,length=nil,offset=nil
-#      ret = nil
-#      self.open(name) do |f|
-#        f.seek(offset) unless offset.nil?
-#        ret = f.read(length)
-#      end
-#      ret
-#    end
+    #protected(:forward_method_unsupported)  # -- protecting this method makes rubinius choke
 
     Dir.forward_method_unsupported(:chdir)
 
@@ -206,8 +171,8 @@ class Dir
 
     # getwd/pwd does not need to be forwarded
 
-    Dir.forward_method_unsupported(:glob) # should be a target to support soon
-    def [](glob); return Dir.glob(glob); end
+    Dir.forward_method_array(:glob,2,0) # should be a target to support soon
+    def [](*glob); return Dir.glob(glob,0); end
 
     Dir.forward_method_single(:mkdir)
 
