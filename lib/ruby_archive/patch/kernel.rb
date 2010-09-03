@@ -75,10 +75,14 @@ module Kernel
   end
 
   def require file
+    # define errors to rescue original require from (exception for rubinius)
+    rescue1 = rescue2 = LoadError
+    rescue2 = Rubinius::CompileError if defined?(Rubinius::CompileError)
+
     # use original require if it works
     begin
       return ruby_archive_original_kernel_require(file)
-    rescue LoadError
+    rescue rescue1, rescue2
       # otherwise, try our re-implementation of require
       return false if $LOADED_FEATURES.include?(file)
       rbext = '.rb'
