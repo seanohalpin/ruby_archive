@@ -1,7 +1,6 @@
 class File
   class << self
     @@ruby_archive_file_class_bind = binding
-    ONLY_ONE_DEEP = "Malformed archive location -- only one level deep supported (for now)"
 
     # Determines whether a specified location appears to be within an archive.
     # It first checks if the given location exists on the filesystem, and if
@@ -13,7 +12,7 @@ class File
       return false if File.ruby_archive_original_exist?(path)
       sp = path.split('!')
       return sp if sp.size == 2
-      raise ArgumentError, ONLY_ONE_DEEP if sp.size > 2
+      raise ArgumentError, "only one archive deep supported (for now)" if sp.size > 2
       return false
     end
 
