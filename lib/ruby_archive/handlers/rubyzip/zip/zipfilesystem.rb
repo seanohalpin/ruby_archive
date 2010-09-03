@@ -494,7 +494,7 @@ module Zip
       def glob_single(pattern,flags=0)
         results = []
         @mappedZip.each do |f|
-          results << f if File.fnmatch(pattern,f,flags)
+          results << f if File.fnmatch(pattern,f, (flags | File::FNM_PATHNAME))
         end
         return results
       end
