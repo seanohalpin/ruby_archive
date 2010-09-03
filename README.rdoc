@@ -2,14 +2,20 @@
 
 Seamless access to ruby source and other files inside zip archives
 
-A Ruby Summer of Code 2010 Project
+Works with all rubies I have tested it with... ruby 1.8.7, rubinius, jruby, and ruby-head.
+
+Includes an embedded and modified version of rubyzip.  Readme and license for rubyzip
+available in README.rubyzip.  Note that ruby_archive may fail if the program uses
+a different version of rubyzip.
+
+A Ruby Summer of Code 2010 Project.
 
 == Usage
 
 Using ruby_archive in your project is easy!  It allows you to use zip or jar archives
 much the same way you already use normal operating system directories.
 
-To use it, simply +require 'ruby_archive'+ in your project.  After this, you can:
+To use it, simply <code>require 'ruby_archive'</code> in your project.  After this, you can:
 * open files for reading or writing within an archive using <code>Kernel#open</code> or
   <code>File.open</code>
 * <code>load</code> or <code>require</code> ruby source files from within an archive
@@ -17,20 +23,56 @@ To use it, simply +require 'ruby_archive'+ in your project.  After this, you can
 * much more...
 
 The format for accessing files within an archive is: "(archive_file)!/(file_within_archive)"
-So to open +information.txt+ inside +archive.jar+, you might:
+So to open <code>information.txt</code> inside <code>archive.jar</code>, you might:
 
 <code>f = File.open('./archive.jar!/information.txt','r')</code>
 
-Or to load +source.rb+ inside +program.zip+, you might:
+Or to load <code>source.rb</code> inside <code>program.zip</code>, you might:
 
 <code>require './program.zip!/source'</code>
 
 You can also add archive directories to the load path:
 
-<code>$LOAD_PATH << 'program.zip!/'
+<code>$LOAD_PATH << 'program.zip!/' ; require 'source'</code>
 
-require 'source'</code>
+== Launcher
 
+There is also a simple launcher for programs packaged as archive files in the
+bin folder.  If you include a file named <code>start.rb</code> in your archive,
+this launcher will run this file.  The launcher always adds the base path of the
+archive to the load path.
+
+The launcher can be used from the shell as follows:
+
+<code>rba_launch program.zip</code>
+
+You can also specify a specific file to load with the launcher, though often on some
+shells you may need to escape the '!' or single-quote the filename:
+
+<code>rba_launch 'program.zip!/alternate_start.rb'</code>
+
+<code>rba_launch program.zip\!/alternate_start.rb</code>
+
+== To-do
+
+A lot of work has gone into making this work great, but there are still many features
+that we should be able to implement.
+
+* <b>autoload</b> - initially I thought it would not be possible to make it work without
+  patches to the ruby interpreter, but some research on the topic has led me to
+  believe it is indeed possible.
+* <b>launcher</b> - the included launcher is extremely basic.  We would like one that can
+  do things like read jar manifests and load configuration options from the archive.
+* <b>File.*** and Dir.***</b> - while most common methods work, there are a couple that may
+  come up from time to time that are currently marked as forward_method_unsupported
+  (meaning they will fail if called on an archive location)
+* More archive handlers - zip_handler.rb works great for zip and jar files, but I'd like
+  to add more supported formats.  A handler for gem files, for example, would be great.
+
+== Bugs?
+
+Please put bug reports on the issue tracker.  Include any error messages, exceptions,
+and (if applicable) source code that is causing the problem.
 
 == Note on Patches/Pull Requests
  
