@@ -28,7 +28,9 @@ Or to load +source.rb+ inside +program.zip+, you might:
 You can also add archive directories to the load path:
 
 <code>$LOAD_PATH << 'program.zip!/'
+
 require 'source'</code>
+
 
 == Note on Patches/Pull Requests
  
