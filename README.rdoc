@@ -1,8 +1,8 @@
 = ruby_archive
 
-Seamless access to ruby source and other files inside zip archives
+Seamless access to Ruby source and other files inside zip archives
 
-Works with all rubies I have tested it with... ruby 1.8.7, rubinius, jruby, and ruby-head.
+Works with all rubies I have tested it with... ruby-1.8.7, rubinius, jruby, and ruby-head.
 
 Includes a modified version of rubyzip.  Readme and license for rubyzip are
 available in README.rubyzip.  Note that ruby_archive may fail if the program uses
@@ -18,7 +18,7 @@ much the same way you already use normal operating system directories.
 To use it, simply <code>require 'ruby_archive'</code> in your project.  After this, you can:
 * open files for reading or writing within an archive using <code>Kernel#open</code> or
   <code>File.open</code>
-* <code>load</code> or <code>require</code> ruby source files from within an archive
+* <code>load</code> or <code>require</code> Ruby source files from within an archive
 * <code>glob</code> files within an archive directory
 * much more...
 
@@ -34,6 +34,13 @@ Or to load <code>source.rb</code> inside <code>program.zip</code>, you might:
 You can also add archive directories to the load path:
 
 <code>$LOAD_PATH << 'program.zip!/' ; require 'source'</code>
+
+Note that if the specified path (including the exclamation point) exists as a
+file on the filesystem (i.e. not an archive), it will load the file instead of
+the archive.  So, if you have an archive named <code>archive.zip</code> and a
+directory name <code>archive.zip!</code> with a file named <code>text.txt</code>
+inside, a request for <code>'archive.zip!/text.txt'</code> will load the file
+rather than look for text.txt inside <code>archive.zip</code>.
 
 == Launcher
 
@@ -59,15 +66,18 @@ A lot of work has gone into making this work great, but there are still many fea
 that we should be able to implement.
 
 * <b>autoload</b> - initially I thought it would not be possible to make it work without
-  patches to the ruby interpreter, but some research on the topic has led me to
+  patches to the Ruby interpreter, but some research on the topic has led me to
   believe it is indeed possible.
 * <b>launcher</b> - the included launcher is extremely basic.  We would like one that can
   do things like read jar manifests and load configuration options from the archive.
 * <b>File.*** and Dir.***</b> - while most common methods work, there are a couple that may
   come up from time to time that are currently marked as forward_method_unsupported
   (meaning they will fail if called on an archive location)
-* More archive handlers - zip_handler.rb works great for zip and jar files, but I'd like
+* <b>More archive handlers</b> - zip_handler.rb works great for zip and jar files, but I'd like
   to add more supported formats.  A handler for gem files, for example, would be great.
+* <b>Various fixes to zip_handler/rubyzip</b> - for example, currently you can only load files
+  within a zip archive with string modes ('r','w',etc).  Trying to use a constant mode (File::RDONLY,
+  etc) will raise an exception.
 
 == Bugs?
 
@@ -83,6 +93,12 @@ and (if applicable) source code that is causing the problem.
 * Commit, do not mess with rakefile, version, or history.
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
+
+== Thanks
+
+* <b>Ruby Summer of Code</b> and all those involved in it, for being awesome.  http://rubysoc.org
+* <b>Evan Phoenix</b> for being my mentor on this project
+* <b>Authors of rubyzip</b> for making a really great way to work with zip files in Ruby
 
 == Copyright
 
