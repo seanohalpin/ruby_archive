@@ -1,9 +1,9 @@
-load File.expand_path('../ruby_archive/patch.rb',__FILE__)
+require File.expand_path('../ruby_archive/patch.rb',__FILE__)
 
 module RubyArchive
   class Handler
     # ruby_archive/handler.rb
-    load File.expand_path('../ruby_archive/handler.rb',__FILE__)
+    require File.expand_path('../ruby_archive/handler.rb',__FILE__)
   end
 
   module Handlers
@@ -76,6 +76,4 @@ end
 at_exit { RubyArchive::close_all_archives }
 
 # load builtin handlers
-Dir.glob(
-         File.expand_path('../ruby_archive/handlers/*.rb',__FILE__)
-          ).each { |file| load(file,false) }
+require File.expand_path('../ruby_archive/handlers/zip_handler.rb',__FILE__)
