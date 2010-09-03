@@ -108,6 +108,7 @@ class File
                 file_handler = RubyArchive.get(location_info[0]).file
                 raise NotImplementedError unless file_handler.respond_to?(:#{method})
                 args_to_send = args_before_path + [location_info[1]]
+puts "sending #{method}\#{args_to_send.inspect}"
                 file_handler.send(:#{method},*args_to_send)
                 next
               rescue NotImplementedError
@@ -116,34 +117,6 @@ class File
             end         
           end
           return path_list.size
-        end
-      }, @@ruby_archive_file_class_bind, __FILE__, eval_line
-    end
-    #protected(:forward_method_multi)  # -- protecting this method makes rubinius choke
-
-    # Marks a function as unsupported by archives.  path_args should be an array
-    # of argument indices containing filepaths to check.
-    def forward_method_unsupported method, min_arguments=1, path_args=[0]
-      alias_name = "ruby_archive_original_#{method}".intern
-      eval_line = __LINE__; eval %{
-        unless File.respond_to?(:#{alias_name})
-          alias_method(:#{alias_name}, :#{method})
-        end
-        protected(:#{alias_name})
-
-        define_method(:#{method}) do |*args|
-          if (#{min_arguments} > 0 && args.size == 0)
-            raise ArgumentError, "wrong number of arguments (0 for #{min_arguments})"
-          end
-
-          # grab args before the list of filepaths, and the list of filepaths
-          #{path_args.inspect}.each do |i|
-            if File.in_archive?(args[i]) != false
-              raise NotImplementedError, "File.#{method} is not supported for files within archives (yet)"
-            end
-          end
-          
-          File.send(:#{alias_name},*args)
         end
       }, @@ruby_archive_file_class_bind, __FILE__, eval_line
     end
@@ -233,7 +206,7 @@ class File
 
     File.forward_method_single(:grpowned?)
 
-    File.forward_method_unsupported(:identical?,2,[0,1])
+    # no replacement for identical right now
 
     # join does not need to be forwarded
 
@@ -241,7 +214,7 @@ class File
 
     File.forward_method_multi(:lchown,2,2)
 
-    File.forward_method_unsupported(:link,2,[0,1])
+    #File.forward_method(:link
 
     File.forward_method_single(:lstat)
 
@@ -257,7 +230,7 @@ class File
 
     File.forward_method_single(:readlink)
 
-    File.forward_method_unsupported(:rename,2,[0,1]) # should be a target to support soon
+    #File.forward_method(:rename
 
     File.forward_method_single(:setgid?)
 
@@ -275,9 +248,11 @@ class File
 
     File.forward_method_single(:sticky?)
 
-    File.forward_method_unsupported(:symlink,2,[0,1])
+    #File.forward_method(:symlink
 
     File.forward_method_single(:symlink?)
+
+    #File.forward_method(:syscopy
 
     File.forward_method_single(:truncate)
 
