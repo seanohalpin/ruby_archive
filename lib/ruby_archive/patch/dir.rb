@@ -94,6 +94,8 @@ class Dir
 
           path_list = args[#{array_index}]
 
+          path_list = [path_list] unless path_list.is_a?(Array)
+
           results = []
           path_list.each do |path|
             location_info = File.in_archive?(path)

@@ -1,13 +1,8 @@
-unless defined?(Zip::ZipFile)
-  begin
-    require 'zip/zipfilesystem'
-  rescue LoadError
-    if $VERBOSE
-      warn "RubyArchive::Handlers::ZipHandler -- rubyzip not found, using builtin copy"
-    end
-    $LOAD_PATH << File.expand_path("../rubyzip",__FILE__)
-    require 'zip/zipfilesystem'
-  end
+if defined?(Zip::ZipFile)
+  $stderr.puts "RubyArchive requires its own version of rubyzip. A copy of rubyzip has already been loaded. This may lead to unpredictable problems."
+else
+  $LOAD_PATH.unshift(File.expand_path('../rubyzip',__FILE__))
+  require File.expand_path('../rubyzip/zip/zipfilesystem',__FILE__)
 end
 
 module RubyArchive::Handlers
