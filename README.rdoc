@@ -19,11 +19,11 @@ The format for accessing files within an archive is: "(archive_file)!/(file_with
 So to open +information.txt+ inside +archive.jar+, you might:
 +f = File.open('./archive.jar!/information.txt','r')+
 
-Or to load +source.rb+ inside +program.zip+, you might:
-+require './program.zip!/source'+
+Or to load +source.rb+ inside +program.zip+, you might:<br>
+<code>require './program.zip!/source'</code>
 
-You can also add archive directories to the load path:
-<code>$LOAD_PATH << 'program.zip!/'
+You can also add archive directories to the load path:<br>
+<code>$LOAD_PATH << 'program.zip!/'<br>
 require 'source'</code>
 
 == Note on Patches/Pull Requests
