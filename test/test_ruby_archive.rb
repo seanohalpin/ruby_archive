@@ -1,7 +1,8 @@
 require 'helper'
 
-class TestRubyarchivePure < Test::Unit::TestCase
-  should "probably rename this file and start testing for real" do
-    flunk "hey buddy, you should probably rename this file and start testing for real"
+class TestRubyArchive < Test::Unit::TestCase
+  should "load the file from within the archive" do
+    require 'archive.zip!/does_it_work'
+    flunk "It didn't work" if did_it_work? != 'yes'
   end
 end
