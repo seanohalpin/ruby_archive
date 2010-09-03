@@ -492,12 +492,9 @@ module Zip
       end
 
       def glob_single(pattern,flags=0)
-        base = File.dirname(pattern)
-        dir = self.open(base)
         results = []
-        dir.each do |f|
-          test = "#{base}#{f}"
-          results << test if File.fnmatch(pattern,test,flags)
+        @mappedZip.each do |f|
+          results << f if File.fnmatch(pattern,f,flags)
         end
         return results
       end
