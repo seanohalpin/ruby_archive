@@ -42,7 +42,6 @@ module Kernel
     begin
       return ruby_archive_original_kernel_load(filename,wrap)
     rescue rescue1, rescue2
-      puts 'failed original load'
       # otherwise, try our re-implementation of require
       $LOAD_PATH.each do |path|
         full_path = File.expand_path(filename,path)
