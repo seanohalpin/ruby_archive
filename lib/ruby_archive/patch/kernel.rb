@@ -25,8 +25,7 @@ module Kernel
   def open name,*rest,&block
     Kernel::open(name,*rest,&block)
   end
-  
-  private :ruby_archive_original_kernel_open, :open
+  private(:ruby_archive_original_kernel_open, :open)
 
   unless Kernel.respond_to?('ruby_archive_original_kernel_load',true)
     # Alias for the original +Kernel#load+
@@ -35,25 +34,36 @@ module Kernel
   end
 
   def load filename,wrap=false
-    $LOAD_PATH.each do |path|
-      full_path = File.expand_path(filename,path)
+    # define errors to rescue original require from (exception for rubinius)
+    rescue1 = rescue2 = LoadError
+    rescue2 = Rubinius::CompileError if defined?(Rubinius::CompileError)
 
-      to_eval = nil
-      begin
-        to_eval = File.read(full_path)
-      rescue Exception
-        next
+    # use original load if it works
+    begin
+      return ruby_archive_original_kernel_load(filename,wrap)
+    rescue rescue1, rescue2
+      puts 'failed original load'
+      # otherwise, try our re-implementation of require
+      $LOAD_PATH.each do |path|
+        full_path = File.expand_path(filename,path)
+        
+        to_eval = nil
+        begin
+          to_eval = File.read(full_path)
+        rescue Exception
+          next
+        end
+        
+        if wrap
+          Module.new.instance_eval(to_eval,full_path)
+        else
+          eval(to_eval,TOPLEVEL_BINDING,full_path)
+        end
+        return true
+        
       end
-
-      if wrap
-        Module.new.instance_eval(to_eval,full_path)
-      else
-        eval(to_eval,TOPLEVEL_BINDING,full_path)
-      end
-      return true
-
+      raise LoadError, "no such file to load -- #{filename}"
     end
-    raise LoadError, "no such file to load -- #{filename}"
   end
   private(:load)
 
