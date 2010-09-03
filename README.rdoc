@@ -4,7 +4,7 @@ Seamless access to ruby source and other files inside zip archives
 
 Works with all rubies I have tested it with... ruby 1.8.7, rubinius, jruby, and ruby-head.
 
-Includes an embedded and modified version of rubyzip.  Readme and license for rubyzip
+Includes a modified version of rubyzip.  Readme and license for rubyzip are
 available in README.rubyzip.  Note that ruby_archive may fail if the program uses
 a different version of rubyzip.
 
