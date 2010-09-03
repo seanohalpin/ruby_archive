@@ -20,7 +20,7 @@ class Dir
     # This code is heavily duplicated from +File.forward_method_single+ - I would like
     # to make the same code work in two different places but couldn't quickly find
     # a way.
-    def forward_method_single method, min_arguments=1, path_arg_index=0
+    def forward_method_single method, min_arguments=1, path_arg_index=0, on_load_error=nil
       alias_name = "ruby_archive_original_#{method}".intern
       eval_line = __LINE__; eval %{
         unless Dir.respond_to?(:#{alias_name})
@@ -53,6 +53,9 @@ class Dir
               raise NotImplementedError unless dir_handler.respond_to?(:#{method})
               args_to_send = args_before_path + [location_info[1]] + args_after_path
               return dir_handler.send(:#{method},*args_to_send)
+            rescue LoadError
+              raise if #{on_load_error.inspect}.nil?
+              return #{on_load_error.inspect}
             rescue NotImplementedError
               raise NotImplementedError, "#{method} not implemented in handler for specified archive"
             end

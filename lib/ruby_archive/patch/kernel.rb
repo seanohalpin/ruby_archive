@@ -57,64 +57,75 @@ module Kernel
   end
   private(:load)
 
+  # loads an extension given the _full path_
+  def load_extension full_path
+    orig_loaded_features = $LOADED_FEATURES.dup
+    unless File.in_archive?(full_path)
+      ruby_archive_original_kernel_require(full_path)
+    else
+      raise LoadError, "Can't load native extensions from archives (yet)"
+    end
+    $LOADED_FEATURES.replace(orig_loaded_features)
+    return true
+  end
+
   unless Kernel.respond_to?('ruby_archive_original_kernel_require',true)
     # Alias for the original +Kernel#require+
     alias ruby_archive_original_kernel_require require
   end
 
-  def load_path_find file
+  def require file
+    # use original require if it works
+    begin
+      return ruby_archive_original_kernel_require(file)
+    rescue LoadError
+      # otherwise, try our re-implementation of require
+      return false if $LOADED_FEATURES.include?(file)
+      rbext = '.rb'
+      dlext = ".#{Config::CONFIG['DLEXT']}"
+      ext = File.extname(file)
+      if ext == rbext || ext == dlext
+        f = require_path_find(file)
+        unless f == false
+          return false if $LOADED_FEATURES.include?(f)
+          load(f,false) if ext == rbext
+          load_extension(f) if ext == dlext
+          $LOADED_FEATURES << f
+          return true
+        end
+      end
+      
+      # search for "file.rb"
+      return false if $LOADED_FEATURES.include?("#{file}#{rbext}")
+      f = require_path_find("#{file}#{rbext}")
+      unless f == false
+        return false if $LOADED_FEATURES.include?(f)
+        load(f,false)
+        $LOADED_FEATURES << f
+        return true
+      end
+
+      # search for "file.so"
+      return false if $LOADED_FEATURES.include?("#{file}#{dlext}")
+      f = require_path_find("#{file}#{dlext}")
+      unless f == false
+        return false if $LOADED_FEATURES.include?(f)
+        load_extension(f)
+        $LOADED_FEATURES << f
+        return true
+      end
+      
+      raise LoadError, "no such file to load -- #{file}"
+    end
+  end
+  private(:require)
+
+  def require_path_find file
     $LOAD_PATH.each do |path|
       test = File.expand_path(file,path)
       return test if File.exist?(test)
     end
     return false
   end
-  private(:load_path_find)
-
-  # loads an extension given the _full path_
-  def load_extension full_path
-    unless File.in_archive?(full_path)
-      ruby_archive_original_kernel_require(full_path)
-    end
-  end
-
-  def require file
-    return false if $LOADED_FEATURES.include?(file)
-    rbext = '.rb'
-    dlext = ".#{Config::CONFIG['DLEXT']}"
-    ext = File.extname(file)
-    if ext == rbext || ext == dlext
-      f = load_path_find(file)
-      unless f == false
-        return false if $LOADED_FEATURES.include?(f)
-        load(f,false) if ext == rbext
-        load_extension(f) if ext == dlext
-        $LOADED_FEATURES << f
-        return true
-      end
-    end
-
-    return false if $LOADED_FEATURES.include?("#{file}#{rbext}")
-    # search for "file.rb"
-    f = load_path_find("#{file}#{rbext}")
-    unless f == false
-      return false if $LOADED_FEATURES.include?(f)
-      load(f,false)
-      $LOADED_FEATURES << f
-      return true
-    end
-
-    return false if $LOADED_FEATURES.include?("#{file}#{dlext}")
-    # search for "file.so"
-    f = load_path_find("#{file}#{dlext}")
-    unless f == false
-      return false if $LOADED_FEATURES.include?(f)
-      return load_extension(f)
-      $LOADED_FEATURES << f
-      return true
-    end
-
-    raise LoadError, "no such file to load -- #{file}"
-  end
-  private(:require)
+  private(:require_path_find)
 end

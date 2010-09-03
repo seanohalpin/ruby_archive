@@ -30,7 +30,7 @@ class File
     #
     # The current method of doing this is kind of ugly and involves 'eval',
     # but it works(tm).  This method is definitely a candidate for improvement.
-    def forward_method_single method, min_arguments=1, path_arg_index=0
+    def forward_method_single method, min_arguments=1, path_arg_index=0, on_load_error=nil
       alias_name = "ruby_archive_original_#{method}".intern
       eval_line = __LINE__; eval %{
         unless File.respond_to?(:#{alias_name})
@@ -63,6 +63,9 @@ class File
               raise NotImplementedError unless file_handler.respond_to?(:#{method})
               args_to_send = args_before_path + [location_info[1]] + args_after_path
               return file_handler.send(:#{method},*args_to_send)
+            rescue LoadError
+              raise if #{on_load_error.inspect}.nil?
+              return #{on_load_error.inspect}
             rescue NotImplementedError
               raise NotImplementedError, "#{method} not implemented in handler for specified archive"
             end
@@ -218,7 +221,7 @@ class File
 
     File.forward_method_single(:executable_real?)
 
-    File.forward_method_single(:exist?)
+    File.forward_method_single(:exist?,1,0,false)
     alias exists? exist? #(obsolete alias)
 
     # expand_path does not need to be forwarded
