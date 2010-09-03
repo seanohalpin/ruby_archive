@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+require 'optparse'
+
+# default options
+options = {
+  :entry_point => 'start.rb'
+}
+
+# overrides in archive
+options_archive = {}
+
+# overrides by command line
+options_cmdline = {}
+
+help_banner = nil
+opts = OptionParser.new do |opts|
+  opts.banner = 
+%{Usage: #{$0} [options] [archive] [arguments]
+To run a specific file within an archive, use archive.zip!/ruby_file.rb
+
+}
+
+  #opts.on("-v", "--[no-]verbose", "Verbose errors/warnings") do |v|
+  #  options[:verbose] = v
+  #end
+
+  opts.on("-e", "--entry-point=FILE", String, "Force a specific default file to load within the archive") do |l|
+    options_cmdline[:entry_point] = l
+  end
+
+  opts.on_tail("-h", "--help", "Print this message") do
+    puts opts
+    exit
+  end
+end
+
+opts.order! # parse up to archive name
+
+if ARGV.empty?  # no archive was specified, print banner and exit
+  puts opts
+  exit
+end
+
+require File.expand_path("../../lib/ruby_archive",__FILE__)
+
+archive_file = File.expand_path(ARGV.shift,Dir.getwd)
+file_to_load = nil
+
+location_info = File.in_archive?(archive_file)
+unless location_info == false
+  archive_file = location_info[0]
+  file_to_load = location_info[1]
+end
+
+options.merge!(options_archive)
+options.merge!(options_cmdline)
+# TODO: load archive specific options
+
+file_to_load = options[:entry_point] if file_to_load.nil?
+
+load("#{archive_file}!#{file_to_load}",false)
